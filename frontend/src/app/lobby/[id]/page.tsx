@@ -15,15 +15,15 @@ export default function Lobby() {
   const params = useParams();
   const [players, setPlayers] = useState<Player[]>([]);
   const [userId, setUserId] = useState<string>(v4());
+
   const id = params.id as string;
 
   useEffect(() => {
-    let oldUserId = localStorage.getItem("userId");
+    const oldUserId = localStorage.getItem("userId");
     if(!oldUserId) {
       localStorage.setItem("userId", userId);
     }
-    const newUserId = localStorage.getItem("userId");
-    // @ts-ignore
+    const newUserId = localStorage.getItem("userId") || '';
     setUserId(newUserId);
 
     let userName = localStorage.getItem("username");
@@ -32,10 +32,10 @@ export default function Lobby() {
       userName = randomName;
       localStorage.setItem("username", randomName);
     }
-    let socket = io('http://localhost:4000');
+    const socket = io('http://localhost:4000');
     socket.emit('joinLobby', id, userId, userName);
 
-    socket.on('lobbyJoined', (players) => {
+    socket.on('lobbyUpdated', (players) => {
       setPlayers(players);
     });
 

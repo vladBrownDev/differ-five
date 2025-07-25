@@ -15,7 +15,7 @@ const io = new Server(server, {
 const lobbies = new Map();
 
 io.on('connection', (socket) => {
-	console.log(`New connection: ${socket.id}`);
+	console.log('Connected');
 
 	socket.on('joinLobby', (lobbyId, playerId, playerName) => {
 		let lobby = lobbies[lobbyId];
@@ -29,10 +29,21 @@ io.on('connection', (socket) => {
 			};
 			lobby = lobbies[lobbyId];
 		}
+
 		lobby.players.push({id: playerId, name: playerName, socket: socket.id});
 		lobby.players.forEach((player) => {
-			io.to(player.socket).emit('lobbyJoined', lobby.players);
+			io.to(player.socket).emit('lobbyUpdated', lobby.players);
 		})
+
+		socket.on('disconnect', () => {
+			const playerIndex = lobby.players.findIndex((el) => el.id === playerId);
+			if(playerIndex !== -1) {
+				lobby.players.splice(playerIndex, 1);
+				lobby.players.forEach((player) => {
+					io.to(player.socket).emit('lobbyUpdated', lobby.players);
+				});
+			}
+		});
 	});
 
 	socket.on('makeMove', ({ lobbyId, move }) => {
